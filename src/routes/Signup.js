@@ -1,16 +1,9 @@
 import React from 'react';
-import { AsyncStorage, Text, Button, View, TextInput, StyleSheet } from 'react-native';
+import { AsyncStorage, Text, Button, View } from 'react-native';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
 
-const styles = StyleSheet.create({
-  field: {
-    borderBottomWidth: 1,
-    fontSize: 20,
-    marginBottom: 15,
-    height: 35,
-  },
-});
+import TextField from '../components/TextField';
 
 const defaultState = {
   values: {
@@ -22,29 +15,6 @@ const defaultState = {
   isSubmitting: false,
 };
 
-class TextField extends React.PureComponent {
-  onChangeText = (text) => {
-    const { onChangeText, name } = this.props;
-    onChangeText(name, text);
-  };
-
-  render() {
-    const { value, secureTextEntry, name } = this.props;
-
-    return (
-      <TextInput
-        onChangeText={this.onChangeText}
-        value={value}
-        style={styles.field}
-        placeholder={name}
-        autoCapitalize="none"
-        secureTextEntry={!!secureTextEntry}
-      />
-    );
-  }
-}
-
-/* eslint-disable react/no-multi-comp */
 class Signup extends React.Component {
   state = defaultState;
 
@@ -79,7 +49,7 @@ class Signup extends React.Component {
     }
 
     await AsyncStorage.setItem('@ecommerce/token', response.data.signup.token);
-    this.setState(defaultState);
+    // this.setState(defaultState);
     this.props.history.push('/products');
   };
 
