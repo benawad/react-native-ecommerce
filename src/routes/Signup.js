@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, View, TextInput, StyleSheet } from 'react-native';
+import { AsyncStorage, Text, Button, View, TextInput, StyleSheet } from 'react-native';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
 
@@ -12,16 +12,41 @@ const styles = StyleSheet.create({
   },
 });
 
-class Signup extends React.Component {
-  state = {
-    values: {
-      name: '',
-      email: '',
-      password: '',
-    },
-    errors: {},
-    isSubmitting: false,
+const defaultState = {
+  values: {
+    name: '',
+    email: '',
+    password: '',
+  },
+  errors: {},
+  isSubmitting: false,
+};
+
+class TextField extends React.PureComponent {
+  onChangeText = (text) => {
+    const { onChangeText, name } = this.props;
+    onChangeText(name, text);
   };
+
+  render() {
+    const { value, secureTextEntry, name } = this.props;
+
+    return (
+      <TextInput
+        onChangeText={this.onChangeText}
+        value={value}
+        style={styles.field}
+        placeholder={name}
+        autoCapitalize="none"
+        secureTextEntry={!!secureTextEntry}
+      />
+    );
+  }
+}
+
+/* eslint-disable react/no-multi-comp */
+class Signup extends React.Component {
+  state = defaultState;
 
   onChangeText = (key, value) => {
     this.setState(state => ({
@@ -44,15 +69,26 @@ class Signup extends React.Component {
         variables: this.state.values,
       });
     } catch (err) {
-      console.log(err);
+      this.setState({
+        errors: {
+          email: 'Already taken',
+        },
+        isSubmitting: false,
+      });
+      return;
     }
 
-    console.log(response);
-    this.setState({ isSubmitting: false });
+    await AsyncStorage.setItem('@ecommerce/token', response.data.signup.token);
+    this.setState(defaultState);
+    this.props.history.push('/products');
+  };
+
+  goToLoginPage = () => {
+    this.props.history.push('/login');
   };
 
   render() {
-    const { values: { name, email, password } } = this.state;
+    const { errors, values: { name, email, password } } = this.state;
 
     return (
       <View
@@ -64,27 +100,18 @@ class Signup extends React.Component {
         }}
       >
         <View style={{ width: 200 }}>
-          <TextInput
-            onChangeText={text => this.onChangeText('name', text)}
-            value={name}
-            style={styles.field}
-            placeholder="name"
-          />
-          <TextInput
-            onChangeText={text => this.onChangeText('email', text)}
-            value={email}
-            style={styles.field}
-            placeholder="email"
-          />
-
-          <TextInput
-            onChangeText={text => this.onChangeText('password', text)}
+          <TextField value={name} name="name" onChangeText={this.onChangeText} />
+          {errors.email && <Text style={{ color: 'red' }}>{errors.email}</Text>}
+          <TextField value={email} name="email" onChangeText={this.onChangeText} />
+          <TextField
             value={password}
-            style={styles.field}
-            placeholder="password"
+            name="password"
+            onChangeText={this.onChangeText}
             secureTextEntry
           />
           <Button title="Create account" onPress={this.submit} />
+          <Text style={{ textAlign: 'center' }}>or</Text>
+          <Button title="Login" onPress={this.goToLoginPage} />
         </View>
       </View>
     );
