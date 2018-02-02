@@ -4,6 +4,7 @@ import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
 
 import TextField from '../components/TextField';
+import { TOKEN_KEY } from '../constants';
 
 const defaultState = {
   values: {
@@ -48,7 +49,7 @@ class Signup extends React.Component {
       return;
     }
 
-    await AsyncStorage.setItem('@ecommerce/token', response.data.signup.token);
+    await AsyncStorage.setItem(TOKEN_KEY, response.data.signup.token);
     // this.setState(defaultState);
     this.props.history.push('/products');
   };
