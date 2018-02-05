@@ -1,6 +1,9 @@
 import React from 'react';
 import { Image, Button, View } from 'react-native';
 import { ImagePicker } from 'expo';
+import gql from 'graphql-tag';
+import { graphql } from 'react-apollo';
+import { ReactNativeFile } from 'apollo-upload-client';
 
 import TextField from '../components/TextField';
 
@@ -32,12 +35,24 @@ class NewProduct extends React.Component {
     }
 
     this.setState({ isSubmitting: true });
+    const { pictureUrl, name, price } = this.state.values;
+    const picture = new ReactNativeFile({
+      uri: pictureUrl,
+      type: 'image/png',
+      name: 'i-am-a-name',
+    });
     let response;
     try {
       response = await this.props.mutate({
-        variables: this.state.values,
+        variables: {
+          name,
+          price,
+          picture,
+        },
       });
     } catch (err) {
+      console.log('err happened');
+      console.log(err);
       // this.setState({
       //   errors: {
       //     email: 'Already taken',
@@ -46,10 +61,12 @@ class NewProduct extends React.Component {
       // });
       // return;
     }
+    console.log(response);
 
     // await AsyncStorage.setItem(TOKEN_KEY, response.data.signup.token);
     // this.setState(defaultState);
-    this.props.history.push('/products');
+    // this.props.history.push('/products');
+    this.setState({ isSubmitting: false });
   };
 
   pickImage = async () => {
@@ -89,4 +106,12 @@ class NewProduct extends React.Component {
   }
 }
 
-export default NewProduct;
+const createProductMutation = gql`
+  mutation($name: String!, $price: Float!, $picture: Upload!) {
+    createProduct(name: $name, price: $price, picture: $picture) {
+      id
+    }
+  }
+`;
+
+export default graphql(createProductMutation)(NewProduct);
