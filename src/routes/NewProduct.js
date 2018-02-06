@@ -41,9 +41,9 @@ class NewProduct extends React.Component {
       type: 'image/png',
       name: 'i-am-a-name',
     });
-    let response;
+
     try {
-      response = await this.props.mutate({
+      await this.props.mutate({
         variables: {
           name,
           price,
@@ -53,20 +53,10 @@ class NewProduct extends React.Component {
     } catch (err) {
       console.log('err happened');
       console.log(err);
-      // this.setState({
-      //   errors: {
-      //     email: 'Already taken',
-      //   },
-      //   isSubmitting: false,
-      // });
-      // return;
+      return;
     }
-    console.log(response);
 
-    // await AsyncStorage.setItem(TOKEN_KEY, response.data.signup.token);
-    // this.setState(defaultState);
-    // this.props.history.push('/products');
-    this.setState({ isSubmitting: false });
+    this.props.history.push('/products');
   };
 
   pickImage = async () => {
