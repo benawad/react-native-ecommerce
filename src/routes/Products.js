@@ -33,18 +33,12 @@ const Products = ({ data: { products }, loading, history }) => {
     return null;
   }
 
-  const productsWithKey = products.map(p => ({
-    ...p,
-    key: p.id,
-  }));
-
-  console.log(productsWithKey[0]);
-
   return (
     <View>
       <Button title="Create Product" onPress={() => history.push('/new-product')} />
       <FlatList
-        data={productsWithKey}
+        keyExtractor={item => item.id}
+        data={products}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Image
@@ -62,7 +56,7 @@ const Products = ({ data: { products }, loading, history }) => {
   );
 };
 
-const productsQuery = gql`
+export const productsQuery = gql`
   {
     products {
       id
