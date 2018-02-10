@@ -113,6 +113,9 @@ const createProductMutation = gql`
       name
       price
       pictureUrl
+      seller {
+        id
+      }
     }
   }
 `;

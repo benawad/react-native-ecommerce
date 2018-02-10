@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, Text, View, Button, FlatList, StyleSheet } from 'react-native';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
+import { connect } from 'react-redux';
 
 const styles = StyleSheet.create({
   images: {
@@ -26,13 +27,20 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 30,
   },
+  editSection: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
 });
 
-const Products = ({ data: { products }, loading, history }) => {
+const Products = ({
+  userId, data: { products }, loading, history,
+}) => {
   if (loading || !products) {
     return null;
   }
-
+  console.log(userId);
+  console.log(products);
   return (
     <View>
       <Button title="Create Product" onPress={() => history.push('/new-product')} />
@@ -48,6 +56,12 @@ const Products = ({ data: { products }, loading, history }) => {
             <View style={styles.right}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.price}>{`$${item.price}`}</Text>
+              {userId === item.seller.id ? (
+                <View style={styles.editSection}>
+                  <Button title="Edit" onPress={() => 5} />
+                  <Button title="Delete" onPress={() => 5} />
+                </View>
+              ) : null}
             </View>
           </View>
         )}
@@ -63,8 +77,11 @@ export const productsQuery = gql`
       price
       pictureUrl
       name
+      seller {
+        id
+      }
     }
   }
 `;
 
-export default graphql(productsQuery)(Products);
+export default connect(state => ({ userId: state.user.userId }))(graphql(productsQuery)(Products));
