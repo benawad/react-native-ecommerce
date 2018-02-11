@@ -5,7 +5,6 @@ import { ApolloClient, InMemoryCache, ApolloLink } from 'apollo-client-preset';
 import { createUploadLink } from 'apollo-upload-client';
 import { setContext } from 'apollo-link-context';
 import { withClientState } from 'apollo-link-state';
-import gql from 'graphql-tag';
 
 import Routes from './routes';
 import { TOKEN_KEY } from './constants';
@@ -20,22 +19,18 @@ const authLink = setContext(async (_, { headers }) => {
   };
 });
 
-const getUserIdQuery = gql`
-  {
-    getUserId @client {
-      userId
-    }
-  }
-`;
+const inMemoryCache = new InMemoryCache();
 
 const stateLink = withClientState({
-  cache: new InMemoryCache(),
+  cache: inMemoryCache,
   resolvers: {
     Mutation: {
       addUserId: (_, { userId }, { cache }) => {
-        cache.writeQuery({
-          query: getUserIdQuery,
-          data: { getUserId: { __typename: 'UserId', userId } },
+        const data = {
+          getUserId: userId,
+        };
+        cache.writeData({
+          data,
         });
         return null;
       },
@@ -45,7 +40,7 @@ const stateLink = withClientState({
 
 const client = new ApolloClient({
   link: ApolloLink.from([stateLink, authLink, createUploadLink({ uri: 'http://localhost:4000' })]),
-  cache: new InMemoryCache(),
+  cache: inMemoryCache,
 });
 
 export default () => (
