@@ -1,6 +1,6 @@
 import React from 'react';
 import { AsyncStorage, Text } from 'react-native';
-import { graphql } from 'react-apollo';
+import { graphql, compose } from 'react-apollo';
 import gql from 'graphql-tag';
 import { TOKEN_KEY } from '../constants';
 
@@ -22,6 +22,7 @@ class CheckToken extends React.Component {
 
     const { refreshToken: { token: newToken, userId } } = response.data;
     await AsyncStorage.setItem(TOKEN_KEY, newToken);
+    await this.props.addUserId({ variables: { userId } });
     this.props.history.push('/products');
   };
 
@@ -39,4 +40,13 @@ const refreshTokenMutation = gql`
   }
 `;
 
-export default graphql(refreshTokenMutation)(CheckToken);
+const addUserIdMutation = gql`
+  mutation($userId: Int!) {
+    addUserId(userId: $userId) @client
+  }
+`;
+
+export default compose(
+  graphql(refreshTokenMutation),
+  graphql(addUserIdMutation, { name: 'addUserId' }),
+)(CheckToken);

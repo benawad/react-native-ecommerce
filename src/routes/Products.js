@@ -73,6 +73,7 @@ export const productsQuery = gql`
         id
       }
     }
+    getUserId @client
   }
 `;
 
