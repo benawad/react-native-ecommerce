@@ -62,13 +62,16 @@ const Products = ({ data: { products }, loading, history }) => {
   );
 };
 
-const productsQuery = gql`
+export const productsQuery = gql`
   {
     products {
       id
       price
       pictureUrl
       name
+      seller {
+        id
+      }
     }
   }
 `;
