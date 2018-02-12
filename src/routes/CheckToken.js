@@ -41,7 +41,7 @@ const refreshTokenMutation = gql`
 `;
 
 const addUserIdMutation = gql`
-  mutation($userId: Int!) {
+  mutation($userId: String!) {
     addUserId(userId: $userId) @client
   }
 `;

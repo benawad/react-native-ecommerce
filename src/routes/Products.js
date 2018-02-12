@@ -28,7 +28,8 @@ const styles = StyleSheet.create({
   },
 });
 
-const Products = ({ data: { products }, loading, history }) => {
+const Products = ({ data: { products, getUserId }, loading, history }) => {
+  console.log('userId', getUserId);
   if (loading || !products) {
     return null;
   }
@@ -64,16 +65,16 @@ const Products = ({ data: { products }, loading, history }) => {
 
 export const productsQuery = gql`
   {
-    products {
-      id
-      price
-      pictureUrl
-      name
-      seller {
-        id
-      }
-    }
-    getUserId @client
+    # products {
+    #   id
+    #   price
+    #   pictureUrl
+    #   name
+    #   seller {
+    #     id
+    #   }
+    # }
+    getUserId
   }
 `;
 
