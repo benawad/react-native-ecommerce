@@ -20,7 +20,7 @@ class CheckToken extends React.Component {
       return;
     }
 
-    const { refreshToken: { token: newToken, userId } } = response.data;
+    const { refreshToken: { token: newToken } } = response.data;
     await AsyncStorage.setItem(TOKEN_KEY, newToken);
     this.props.history.push('/products');
   };
@@ -34,7 +34,6 @@ const refreshTokenMutation = gql`
   mutation {
     refreshToken {
       token
-      userId
     }
   }
 `;

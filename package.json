@@ -31,6 +31,7 @@
     "expo": "^25.0.0",
     "graphql": "^0.12.3",
     "graphql-tag": "^2.6.1",
+    "jwt-decode": "^2.2.0",
     "react": "16.2.0",
     "react-apollo": "^2.0.4",
     "react-native": "0.52.0",
