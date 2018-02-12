@@ -24,7 +24,6 @@ const inMemoryCache = new InMemoryCache();
 const stateLink = withClientState({
   cache: inMemoryCache,
   resolvers: {
-    Query: () => ({}),
     Mutation: {
       addUserId: (_, { userId }, { cache }) => {
         const data = {
@@ -32,7 +31,8 @@ const stateLink = withClientState({
         };
         cache.writeData({
           data,
-        });
+          __typename:'getUserId' // Typename is required for cache key
+         });
         return null;
       },
     },

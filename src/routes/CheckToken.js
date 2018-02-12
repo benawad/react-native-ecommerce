@@ -22,7 +22,7 @@ class CheckToken extends React.Component {
 
     const { refreshToken: { token: newToken, userId } } = response.data;
     await AsyncStorage.setItem(TOKEN_KEY, newToken);
-    await this.props.addUserId({ variables: { userId } });
+    await this.props.addUserId({ variables: { getUserId: userId } });
     this.props.history.push('/products');
   };
 
