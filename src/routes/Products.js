@@ -65,16 +65,16 @@ const Products = ({ data: { products, getUserId }, loading, history }) => {
 
 export const productsQuery = gql`
   {
-    # products {
-    #   id
-    #   price
-    #   pictureUrl
-    #   name
-    #   seller {
-    #     id
-    #   }
-    # }
-    getUserId
+     products {
+       id
+       price
+       pictureUrl
+       name
+       seller {
+         id
+       }
+     }
+    getUserId @client
   }
 `;
 
