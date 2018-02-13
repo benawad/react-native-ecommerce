@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Text, View, Button, FlatList, StyleSheet, AsyncStorage } from 'react-native';
-import { graphql } from 'react-apollo';
+import { graphql, compose } from 'react-apollo';
 import gql from 'graphql-tag';
 import jwtDecode from 'jwt-decode';
 
@@ -35,6 +35,20 @@ const styles = StyleSheet.create({
   },
 });
 
+export const productsQuery = gql`
+  {
+    products {
+      id
+      price
+      pictureUrl
+      name
+      seller {
+        id
+      }
+    }
+  }
+`;
+
 class Products extends React.Component {
   state = {
     userId: null,
@@ -53,7 +67,8 @@ class Products extends React.Component {
     if (loading || !products) {
       return null;
     }
-
+    console.log('state', this.state.userId);
+    console.log(products[products.length - 1].seller.id);
     return (
       <View>
         <Button title="Create Product" onPress={() => history.push('/new-product')} />
@@ -72,7 +87,21 @@ class Products extends React.Component {
                 {this.state.userId === item.seller.id ? (
                   <View style={styles.editSection}>
                     <Button title="Edit" onPress={() => 5} />
-                    <Button title="Delete" onPress={() => 5} />
+                    <Button
+                      title="Delete"
+                      onPress={() =>
+                        this.props.mutate({
+                          variables: {
+                            id: item.id,
+                          },
+                          update: (store) => {
+                            const data = store.readQuery({ query: productsQuery });
+                            data.products = data.products.filter(x => x.id !== item.id);
+                            store.writeQuery({ query: productsQuery, data });
+                          },
+                        })
+                      }
+                    />
                   </View>
                 ) : null}
               </View>
@@ -84,18 +113,12 @@ class Products extends React.Component {
   }
 }
 
-export const productsQuery = gql`
-  {
-    products {
+export const deleteProductMutation = gql`
+  mutation($id: ID!) {
+    deleteProduct(where: { id: $id }) {
       id
-      price
-      pictureUrl
-      name
-      seller {
-        id
-      }
     }
   }
 `;
 
-export default graphql(productsQuery)(Products);
+export default compose(graphql(productsQuery), graphql(deleteProductMutation))(Products);
