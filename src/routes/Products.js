@@ -67,14 +67,13 @@ class Products extends React.Component {
     if (loading || !products) {
       return null;
     }
-    console.log('state', this.state.userId);
-    console.log(products[products.length - 1].seller.id);
+
     return (
       <View>
         <Button title="Create Product" onPress={() => history.push('/new-product')} />
         <FlatList
           keyExtractor={item => item.id}
-          data={products}
+          data={products.map(x => ({ ...x, showButtons: this.state.userId === x.seller.id }))}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Image
@@ -84,9 +83,17 @@ class Products extends React.Component {
               <View style={styles.right}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.price}>{`$${item.price}`}</Text>
-                {this.state.userId === item.seller.id ? (
+                {item.showButtons ? (
                   <View style={styles.editSection}>
-                    <Button title="Edit" onPress={() => 5} />
+                    <Button
+                      title="Edit"
+                      onPress={() =>
+                        this.props.history.push({
+                          pathname: '/edit-product',
+                          state: item,
+                        })
+                      }
+                    />
                     <Button
                       title="Delete"
                       onPress={() =>
