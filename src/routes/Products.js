@@ -5,6 +5,7 @@ import gql from 'graphql-tag';
 import jwtDecode from 'jwt-decode';
 
 import { TOKEN_KEY } from '../constants';
+import TextField from '../components/TextField';
 
 const styles = StyleSheet.create({
   images: {
@@ -32,6 +33,18 @@ const styles = StyleSheet.create({
   editSection: {
     display: 'flex',
     flexDirection: 'row',
+  },
+  sortRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortButton: {
+    flex: 1,
+  },
+  searchBar: {
+    margin: 10,
   },
 });
 
@@ -70,6 +83,15 @@ class Products extends React.Component {
 
     return (
       <View>
+        <View>
+          <View style={styles.searchBar}>
+            <TextField name="Search" />
+          </View>
+          <View style={styles.sortRow}>
+            <Button style={styles.sortButton} title="Name" onPress={() => 5} />
+            <Button style={styles.sortButton} title="Price" onPress={() => 5} />
+          </View>
+        </View>
         <Button title="Create Product" onPress={() => history.push('/new-product')} />
         <FlatList
           keyExtractor={item => item.id}
