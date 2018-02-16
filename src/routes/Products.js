@@ -49,8 +49,8 @@ const styles = StyleSheet.create({
 });
 
 export const productsQuery = gql`
-  {
-    products {
+  query($orderBy: ProductOrderByInput, $where: ProductWhereInput) {
+    products(orderBy: $orderBy, where: $where) {
       id
       price
       pictureUrl
@@ -65,6 +65,7 @@ export const productsQuery = gql`
 class Products extends React.Component {
   state = {
     userId: null,
+    query: '',
   };
 
   componentDidMount = async () => {
@@ -75,8 +76,19 @@ class Products extends React.Component {
     });
   };
 
+  onChangeText = (name, text) => {
+    this.setState({
+      query: text,
+    });
+    this.props.data.refetch({
+      where: {
+        name_contains: text,
+      },
+    });
+  };
+
   render() {
-    const { data: { products }, loading, history } = this.props;
+    const { data: { products, refetch, variables }, loading, history } = this.props;
     if (loading || !products) {
       return null;
     }
@@ -85,11 +97,27 @@ class Products extends React.Component {
       <View>
         <View>
           <View style={styles.searchBar}>
-            <TextField name="Search" />
+            <TextField name="Search" onChangeText={this.onChangeText} value={this.state.query} />
           </View>
           <View style={styles.sortRow}>
-            <Button style={styles.sortButton} title="Name" onPress={() => 5} />
-            <Button style={styles.sortButton} title="Price" onPress={() => 5} />
+            <Button
+              style={styles.sortButton}
+              title="Name"
+              onPress={() =>
+                refetch({
+                  orderBy: variables.orderBy === 'name_ASC' ? 'name_DESC' : 'name_ASC',
+                })
+              }
+            />
+            <Button
+              style={styles.sortButton}
+              title="Price"
+              onPress={() =>
+                refetch({
+                  orderBy: variables.orderBy === 'price_ASC' ? 'price_DESC' : 'price_ASC',
+                })
+              }
+            />
           </View>
         </View>
         <Button title="Create Product" onPress={() => history.push('/new-product')} />
