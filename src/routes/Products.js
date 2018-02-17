@@ -1,5 +1,14 @@
 import React from 'react';
-import { Image, Text, View, Button, FlatList, StyleSheet, AsyncStorage } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Text,
+  View,
+  Button,
+  FlatList,
+  StyleSheet,
+  AsyncStorage,
+} from 'react-native';
 import { graphql, compose } from 'react-apollo';
 import gql from 'graphql-tag';
 import jwtDecode from 'jwt-decode';
@@ -46,17 +55,29 @@ const styles = StyleSheet.create({
   searchBar: {
     margin: 10,
   },
+  outerContainer: {
+    display: 'flex',
+    flex: 1,
+  },
 });
 
 export const productsQuery = gql`
-  query($orderBy: ProductOrderByInput, $where: ProductWhereInput) {
-    products(orderBy: $orderBy, where: $where) {
-      id
-      price
-      pictureUrl
-      name
-      seller {
-        id
+  query($after: String, $orderBy: ProductOrderByInput, $where: ProductWhereInput) {
+    productsConnection(after: $after, first: 5, orderBy: $orderBy, where: $where) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          id
+          price
+          pictureUrl
+          name
+          seller {
+            id
+          }
+        }
       }
     }
   }
@@ -88,13 +109,19 @@ class Products extends React.Component {
   };
 
   render() {
-    const { data: { products, refetch, variables }, loading, history } = this.props;
-    if (loading || !products) {
+    const {
+      data: {
+        productsConnection, refetch, variables, fetchMore,
+      },
+      loading,
+      history,
+    } = this.props;
+    if (loading || !productsConnection) {
       return null;
     }
-
+    console.log(productsConnection.pageInfo);
     return (
-      <View>
+      <View style={styles.outerContainer}>
         <View>
           <View style={styles.searchBar}>
             <TextField name="Search" onChangeText={this.onChangeText} value={this.state.query} />
@@ -123,7 +150,39 @@ class Products extends React.Component {
         <Button title="Create Product" onPress={() => history.push('/new-product')} />
         <FlatList
           keyExtractor={item => item.id}
-          data={products.map(x => ({ ...x, showButtons: this.state.userId === x.seller.id }))}
+          ListFooterComponent={() => productsConnection.pageInfo.hasNextPage && <ActivityIndicator size="large" color="#00ff00" />}
+          onEndReached={() => {
+            console.log(productsConnection.pageInfo);
+            if (this.calledOnce && productsConnection.pageInfo.hasNextPage) {
+              fetchMore({
+                variables: {
+                  after: productsConnection.pageInfo.endCursor,
+                },
+                updateQuery: (previousResult, { fetchMoreResult }) => {
+                  if (!fetchMoreResult) {
+                    return previousResult;
+                  }
+                  return {
+                    productsConnection: {
+                      __typename: 'ProductConnection',
+                      pageInfo: fetchMoreResult.productsConnection.pageInfo,
+                      edges: [
+                        ...previousResult.productsConnection.edges,
+                        ...fetchMoreResult.productsConnection.edges,
+                      ],
+                    },
+                  };
+                },
+              });
+            } else {
+              this.calledOnce = true;
+            }
+          }}
+          onEndReachedThreshold={0}
+          data={productsConnection.edges.map(x => ({
+            ...x.node,
+            showButtons: this.state.userId === x.node.seller.id,
+          }))}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Image
@@ -178,4 +237,7 @@ export const deleteProductMutation = gql`
   }
 `;
 
-export default compose(graphql(productsQuery), graphql(deleteProductMutation))(Products);
+export default compose(
+  graphql(productsQuery, { options: { variables: { orderBy: 'createdAt_ASC' } } }),
+  graphql(deleteProductMutation),
+)(Products);
