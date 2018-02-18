@@ -15,6 +15,8 @@ class NewProduct extends React.Component {
       name: 'i-am-a-name',
     });
 
+    const { state: variables } = this.props.location;
+
     try {
       await this.props.mutate({
         variables: {
@@ -23,12 +25,12 @@ class NewProduct extends React.Component {
           picture,
         },
         update: (store, { data: { createProduct } }) => {
-          // Read the data from our cache for this query.
-          const data = store.readQuery({ query: productsQuery });
-          // Add our comment from the mutation to the end.
-          data.products.push(createProduct);
-          // Write our data back to the cache.
-          store.writeQuery({ query: productsQuery, data });
+          const data = store.readQuery({ query: productsQuery, variables });
+          data.productsConnection.edges = [
+            { __typename: 'Node', cursor: createProduct.id, node: createProduct },
+            ...data.productsConnection.edges,
+          ];
+          store.writeQuery({ query: productsQuery, data, variables });
         },
       });
     } catch (err) {

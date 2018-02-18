@@ -11,9 +11,9 @@ class EditProduct extends React.Component {
     const { pictureUrl, name, price } = values;
     let picture = null;
 
-    const { state } = this.props.location;
+    const { state: { item, variables } } = this.props.location;
 
-    if (state.pictureUrl !== pictureUrl) {
+    if (item.pictureUrl !== pictureUrl) {
       picture = new ReactNativeFile({
         uri: pictureUrl,
         type: 'image/png',
@@ -24,15 +24,18 @@ class EditProduct extends React.Component {
     try {
       await this.props.mutate({
         variables: {
-          id: state.id,
+          id: item.id,
           name,
           price,
           picture,
         },
         update: (store, { data: { updateProduct } }) => {
-          const data = store.readQuery({ query: productsQuery });
-          data.products = data.products.map(x => (x.id === updateProduct.id ? updateProduct : x));
-          store.writeQuery({ query: productsQuery, data });
+          const data = store.readQuery({ query: productsQuery, variables });
+          data.productsConnection.edges = data.productsConnection.edges.map(x =>
+            (x.node.id === updateProduct.id
+              ? { __typename: 'Node', cursor: updateProduct.id, node: updateProduct }
+              : x));
+          store.writeQuery({ query: productsQuery, data, variables });
         },
       });
     } catch (err) {
@@ -45,13 +48,13 @@ class EditProduct extends React.Component {
   };
 
   render() {
-    const { state } = this.props.location;
+    const { state: { item } } = this.props.location;
     return (
       <Form
         initialValues={{
-          ...state,
-          pictureUrl: `http://localhost:4000/${state.pictureUrl}`,
-          price: `${state.price}`,
+          ...item,
+          pictureUrl: `http://localhost:4000/${item.pictureUrl}`,
+          price: `${item.price}`,
         }}
         submit={this.submit}
       />

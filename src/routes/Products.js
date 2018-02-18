@@ -105,21 +105,24 @@ class Products extends React.Component {
       where: {
         name_contains: text,
       },
+      after: null,
     });
   };
 
   render() {
     const {
       data: {
-        productsConnection, refetch, variables, fetchMore,
+        productsConnection = { pageInfo: {}, edges: [] },
+        refetch,
+        variables,
+        fetchMore,
+        loading,
       },
-      loading,
       history,
     } = this.props;
-    if (loading || !productsConnection) {
-      return null;
-    }
-    console.log(productsConnection.pageInfo);
+
+    const productsMap = {};
+
     return (
       <View style={styles.outerContainer}>
         <View>
@@ -131,8 +134,10 @@ class Products extends React.Component {
               style={styles.sortButton}
               title="Name"
               onPress={() =>
+                !loading &&
                 refetch({
                   orderBy: variables.orderBy === 'name_ASC' ? 'name_DESC' : 'name_ASC',
+                  after: null,
                 })
               }
             />
@@ -140,20 +145,28 @@ class Products extends React.Component {
               style={styles.sortButton}
               title="Price"
               onPress={() =>
+                !loading &&
                 refetch({
                   orderBy: variables.orderBy === 'price_ASC' ? 'price_DESC' : 'price_ASC',
+                  after: null,
                 })
               }
             />
           </View>
         </View>
-        <Button title="Create Product" onPress={() => history.push('/new-product')} />
+        <Button
+          title="Create Product"
+          onPress={() => history.push({ pathname: '/new-product', state: variables })}
+        />
         <FlatList
           keyExtractor={item => item.id}
-          ListFooterComponent={() => productsConnection.pageInfo.hasNextPage && <ActivityIndicator size="large" color="#00ff00" />}
+          ListFooterComponent={() =>
+            (productsConnection.pageInfo.hasNextPage ? (
+              <ActivityIndicator size="large" color="#00ff00" />
+            ) : null)
+          }
           onEndReached={() => {
-            console.log(productsConnection.pageInfo);
-            if (this.calledOnce && productsConnection.pageInfo.hasNextPage) {
+            if (!loading && productsConnection.pageInfo.hasNextPage) {
               fetchMore({
                 variables: {
                   after: productsConnection.pageInfo.endCursor,
@@ -161,6 +174,9 @@ class Products extends React.Component {
                 updateQuery: (previousResult, { fetchMoreResult }) => {
                   if (!fetchMoreResult) {
                     return previousResult;
+                  }
+                  if (!previousResult || !previousResult.productsConnection || !previousResult.productsConnection.edges) {
+                    return fetchMoreResult;
                   }
                   return {
                     productsConnection: {
@@ -174,15 +190,21 @@ class Products extends React.Component {
                   };
                 },
               });
-            } else {
-              this.calledOnce = true;
             }
           }}
           onEndReachedThreshold={0}
-          data={productsConnection.edges.map(x => ({
-            ...x.node,
-            showButtons: this.state.userId === x.node.seller.id,
-          }))}
+          data={productsConnection.edges
+            .map(x => ({
+              ...x.node,
+              showButtons: this.state.userId === x.node.seller.id,
+            }))
+            .filter((x) => {
+              if (productsMap[x.id]) {
+                return false;
+              }
+              productsMap[x.id] = 1;
+              return true;
+            })}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Image
@@ -199,7 +221,10 @@ class Products extends React.Component {
                       onPress={() =>
                         this.props.history.push({
                           pathname: '/edit-product',
-                          state: item,
+                          state: {
+                            item,
+                            variables,
+                          },
                         })
                       }
                     />
@@ -211,9 +236,9 @@ class Products extends React.Component {
                             id: item.id,
                           },
                           update: (store) => {
-                            const data = store.readQuery({ query: productsQuery });
-                            data.products = data.products.filter(x => x.id !== item.id);
-                            store.writeQuery({ query: productsQuery, data });
+                            const data = store.readQuery({ query: productsQuery, variables });
+                            data.productsConnection.edges = data.productsConnection.edges.filter(x => x.node.id !== item.id);
+                            store.writeQuery({ query: productsQuery, data, variables });
                           },
                         })
                       }
@@ -238,6 +263,6 @@ export const deleteProductMutation = gql`
 `;
 
 export default compose(
-  graphql(productsQuery, { options: { variables: { orderBy: 'createdAt_ASC' } } }),
+  graphql(productsQuery, { options: { variables: { orderBy: 'createdAt_DESC' } } }),
   graphql(deleteProductMutation),
 )(Products);
