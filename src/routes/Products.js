@@ -8,6 +8,7 @@ import {
   FlatList,
   StyleSheet,
   AsyncStorage,
+  TouchableOpacity,
 } from 'react-native';
 import { graphql, compose } from 'react-apollo';
 import gql from 'graphql-tag';
@@ -83,6 +84,23 @@ export const productsQuery = gql`
   }
 `;
 
+const productsSubscription = gql`
+  subscription {
+    product(where: { mutation_in: UPDATED }) {
+      node {
+        __typename
+        id
+        name
+        price
+        pictureUrl
+        seller {
+          id
+        }
+      }
+    }
+  }
+`;
+
 class Products extends React.Component {
   state = {
     userId: null,
@@ -94,6 +112,20 @@ class Products extends React.Component {
     const { userId } = jwtDecode(token);
     this.setState({
       userId,
+    });
+    this.props.data.subscribeToMore({
+      document: productsSubscription,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) {
+          return prev;
+        }
+
+        const { node } = subscriptionData.data.product;
+
+        prev.productsConnection.edges = prev.productsConnection.edges.map(x => (x.node.id === node.id ? { __typename: 'Node', cursor: node.id, node } : x));
+
+        return prev;
+      },
     });
   };
 
@@ -119,6 +151,7 @@ class Products extends React.Component {
         loading,
       },
       history,
+      editProductMutate,
     } = this.props;
 
     const productsMap = {};
@@ -175,7 +208,11 @@ class Products extends React.Component {
                   if (!fetchMoreResult) {
                     return previousResult;
                   }
-                  if (!previousResult || !previousResult.productsConnection || !previousResult.productsConnection.edges) {
+                  if (
+                    !previousResult ||
+                    !previousResult.productsConnection ||
+                    !previousResult.productsConnection.edges
+                  ) {
                     return fetchMoreResult;
                   }
                   return {
@@ -213,7 +250,18 @@ class Products extends React.Component {
               />
               <View style={styles.right}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.price}>{`$${item.price}`}</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    editProductMutate({
+                      variables: {
+                        id: item.id,
+                        price: item.price + 5,
+                      },
+                    })
+                  }
+                >
+                  <Text style={styles.price}>{`$${item.price}`}</Text>
+                </TouchableOpacity>
                 {item.showButtons ? (
                   <View style={styles.editSection}>
                     <Button
@@ -254,6 +302,21 @@ class Products extends React.Component {
   }
 }
 
+const editProductMutation = gql`
+  mutation($id: ID!, $price: Float) {
+    updateProduct(id: $id, price: $price) {
+      __typename
+      id
+      name
+      price
+      pictureUrl
+      seller {
+        id
+      }
+    }
+  }
+`;
+
 export const deleteProductMutation = gql`
   mutation($id: ID!) {
     deleteProduct(where: { id: $id }) {
@@ -265,4 +328,5 @@ export const deleteProductMutation = gql`
 export default compose(
   graphql(productsQuery, { options: { variables: { orderBy: 'createdAt_DESC' } } }),
   graphql(deleteProductMutation),
+  graphql(editProductMutation, { name: 'editProductMutate' }),
 )(Products);
