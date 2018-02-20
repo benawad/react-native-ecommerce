@@ -8,10 +8,10 @@ import { setContext } from 'apollo-link-context';
 import { WebSocketLink } from 'apollo-link-ws';
 
 import Routes from './routes';
-import { TOKEN_KEY } from './constants';
+import { TOKEN_KEY, HOST } from './constants';
 
 const wsLink = new WebSocketLink({
-  uri: 'ws://localhost:4000',
+  uri: `ws://${HOST}:4000`,
   options: {
     reconnect: true,
   },
@@ -33,7 +33,7 @@ const link = split(
     return kind === 'OperationDefinition' && operation === 'subscription';
   },
   wsLink,
-  authLink.concat(createUploadLink({ uri: 'http://localhost:4000' })),
+  authLink.concat(createUploadLink({ uri: `http://${HOST}:4000` })),
 );
 
 const client = new ApolloClient({

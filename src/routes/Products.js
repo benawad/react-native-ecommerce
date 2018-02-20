@@ -14,7 +14,7 @@ import { graphql, compose } from 'react-apollo';
 import gql from 'graphql-tag';
 import jwtDecode from 'jwt-decode';
 
-import { TOKEN_KEY } from '../constants';
+import { TOKEN_KEY, HOST } from '../constants';
 import TextField from '../components/TextField';
 
 const styles = StyleSheet.create({
@@ -246,7 +246,7 @@ class Products extends React.Component {
             <View style={styles.row}>
               <Image
                 style={styles.images}
-                source={{ uri: `http://localhost:4000/${item.pictureUrl}` }}
+                source={{ uri: `http://${HOST}:4000/${item.pictureUrl}` }}
               />
               <View style={styles.right}>
                 <Text style={styles.name}>{item.name}</Text>
